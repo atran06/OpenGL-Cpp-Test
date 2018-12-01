@@ -4,16 +4,17 @@
 #include <vector>
 
 #define PI 3.1415926 //used in the drawCircle() method
+#define GRAVITY 0.1
 
 using namespace std;
 
 const int WINDOW_WIDTH = 1280;
 const int WINDOW_HEIGHT = 720;
 
-float mouseX;
-float mouseY;
+double mouseX;
+double mouseY;
 
-struct Point { float x, y; };
+struct Point { double x, y; };
 
 vector<Point> circles; //vector of circles to be drawn
 
@@ -68,7 +69,11 @@ void render() {
 }
 
 void tick() {
+	for (int i = 0; i < circles.size(); i++) {
+		circles[i].y += (0.5);
 
+		if (circles[i].y > WINDOW_HEIGHT - 100) circles.erase(circles.begin() + i);
+	}
 }
 
 int main() {
