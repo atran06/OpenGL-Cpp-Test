@@ -4,7 +4,7 @@
 #include <vector>
 
 #define PI 3.1415926 //used in the drawCircle() method
-#define GRAVITY 0.1
+#define GRAVITY 0.001;
 
 using namespace std;
 
@@ -14,9 +14,18 @@ const int WINDOW_HEIGHT = 720;
 double mouseX;
 double mouseY;
 
-struct Point { double x, y; };
+struct Point { 
+	Point(double x, double y) : x(x), y(y) {} 
+	double x, y; 
+};
+
+struct Velocity { 
+	Velocity(double velX, double velY) : velX(velX), velY(velY) {}
+	double velX, velY; 
+};
 
 vector<Point> circles; //vector of circles to be drawn
+vector<Velocity> circlesVelocities;
 
 void drawCircle(float x, float y, float size);
 
@@ -39,11 +48,12 @@ void mouseButtonCallback(GLFWwindow* window, int button, int action, int mod) {
 	if (button == GLFW_MOUSE_BUTTON_1 && action == GLFW_PRESS) {
 		cout << mouseX << " " << mouseY << endl;
 
-		Point circle;
-		circle.x = mouseX;
-		circle.y = mouseY;
+		Point circle(mouseX, mouseY);
+
+		Velocity circVel(0, 0.2);
 
 		circles.push_back(circle);
+		circlesVelocities.push_back(circVel);
 	}
 }
 
@@ -61,18 +71,27 @@ void drawCircle(float posx, float posy, float size) {
 }
 
 void render() {
-	glColor3f(1.f, 1.f, 1.f);
+	glColor3f(1.f, 1.f, 1.f); //white
 
 	for (int i = 0; i < circles.size(); i++) {
-		drawCircle(circles[i].x, circles[i].y, 50);
+		drawCircle(circles[i].x, circles[i].y, 25);
 	}
 }
 
 void tick() {
 	for (int i = 0; i < circles.size(); i++) {
-		circles[i].y += (0.5);
+		circlesVelocities[i].velY += GRAVITY;
+		circles[i].y += circlesVelocities[i].velY;
 
-		if (circles[i].y > WINDOW_HEIGHT - 100) circles.erase(circles.begin() + i);
+		if (circles[i].y > WINDOW_HEIGHT) { //if the coordinate if the ball is off the screen
+			/* Makes balls disapear when off screen */
+			circles.erase(circles.begin() + i);
+			circlesVelocities.erase(circlesVelocities.begin() + i);
+
+			/* Bounces the balls */
+			//circles[i].y = WINDOW_HEIGHT - 100;
+			//circlesVelocities[i].velY = -circlesVelocities[i].velY + 0.2;
+		}
 	}
 }
 
@@ -93,11 +112,13 @@ int main() {
 	const GLFWvidmode* vidMode = glfwGetVideoMode(glfwGetPrimaryMonitor()); //creates the videomode with primary monitor
 	glfwSetWindowPos(window, vidMode->width / 2 - (WINDOW_WIDTH / 2), vidMode->height / 2 - (WINDOW_HEIGHT / 2)); //sets the window to be in the middle of the screen
 
+	/* Mouse position and action callbacks */
 	glfwSetCursorPosCallback(window, cursorPositionCallback); //gets the position of the cursor
 	glfwSetMouseButtonCallback(window, mouseButtonCallback); //checks for mouse clicks and actions
 
+	/* Main Game Loop*/
 	while (!glfwWindowShouldClose(window)) {
-		processInput(window);
+		processInput(window); //keyboard input
 
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f); //sets the clear color to a dark greenish thing
 		glClear(GL_COLOR_BUFFER_BIT);
@@ -105,14 +126,13 @@ int main() {
 		glMatrixMode(GL_MODELVIEW);
 
 		/* Render here */
-		glColor3f(1.f, 1.f, 1.f); //white
 		render();
-		
+
 		/* Update Here */
 		tick();
 
-		glfwSwapBuffers(window);
-		glfwPollEvents();
+		glfwSwapBuffers(window); //swaps the front and back buffers
+		glfwPollEvents(); 
 	}
 
 	glfwTerminate();
